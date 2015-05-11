@@ -50,6 +50,15 @@ func getStats(containerName string, client *client.Client) (StatsData, error) {
 	return data, nil
 }
 
+func outputFirstLine(w *csv.Writer) {
+	w.Write([]string{
+		"Timestamp",
+		"CPU Usage in Cores",
+		"Memory Usage in Bytes",
+		"Memory Working Set in Bytes",
+	})
+}
+
 func outputLine(containerName string, stats StatsData, w *csv.Writer) {
 	strOutput := []string{
 		fmt.Sprintf("%v", stats.Timestamp),
@@ -68,6 +77,7 @@ func outputLine(containerName string, stats StatsData, w *csv.Writer) {
 func main() {
 	flag.Parse()
 
+	// Create one output file per container.
 	oldStats = make(map[string]cadvisor.ContainerStats)
 	now := time.Now()
 	outputFiles := make(map[string]*csv.Writer)
@@ -77,15 +87,19 @@ func main() {
 		if err != nil {
 			glog.Fatalf("Failed to open %q: %v", filename, err)
 		}
-		outputFiles[cont] = csv.NewWriter(file)
+		w := csv.NewWriter(file)
+		outputFiles[cont] = w
+		outputFirstLine(w)
 		glog.Infof("Outputing stats for %q to %q", cont, filename)
 	}
 
+	// Create the cAdvisor client.
 	client, err := client.NewClient(fmt.Sprintf("http://%s:%d/", *host, *port))
 	if err != nil {
 		glog.Fatalf("Failed to create cAdvisor client: %v", err)
 	}
 
+	//
 	c := time.Tick(1 * time.Second)
 	for range c {
 		for cont, outputFile := range outputFiles {
