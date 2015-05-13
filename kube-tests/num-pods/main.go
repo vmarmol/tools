@@ -14,10 +14,11 @@ import (
 const (
 	replicationController     = "pause-controller"
 	replicationControllerFile = "pause-controller.json"
-	maxPods                   = 50
-	numPodsIncrement          = 5
-	waitInState               = 10 * time.Minute
 )
+
+var maxPods = flag.Int("max_pods", 50, "The max number of pods to scale to")
+var podsDelta = flag.Int("pods_delta", 5, "The number of pods to change at any given step")
+var waitInState = flag.Duration("wait_in_state", 10*time.Minute, "Amount of time to wait between steps")
 
 // Run a kubectl command with the specified arguments.
 func RunCommand(args ...string) {
@@ -61,25 +62,25 @@ func main() {
 	}()
 
 	// Scale the replication controller up.
-	for i := 0; i < (maxPods + numPodsIncrement); i += numPodsIncrement {
+	for i := 0; i < (*maxPods + *podsDelta); i += *podsDelta {
 		// Scale it.
 		WriteRecord(w, time.Now(), fmt.Sprintf("%d", i))
 		RunCommand("resize", fmt.Sprintf("--replicas=%d", i), "replicationcontrollers", replicationController)
 		// TODO(vmarmol): Record events for resizing.
 
 		// Wait.
-		time.Sleep(waitInState)
+		time.Sleep(*waitInState)
 	}
 
 	// Scale the replication controller down.
-	for i := (maxPods - numPodsIncrement); i >= 0; i -= numPodsIncrement {
+	for i := (*maxPods - *podsDelta); i >= 0; i -= *podsDelta {
 		// Scale it.
 		WriteRecord(w, time.Now(), fmt.Sprintf("%d", i))
 		RunCommand("resize", fmt.Sprintf("--replicas=%d", i), "replicationcontrollers", replicationController)
 		// TODO(vmarmol): Record events for resizing.
 
 		// Wait.
-		time.Sleep(waitInState)
+		time.Sleep(*waitInState)
 	}
 
 	glog.Infof("Completed")
