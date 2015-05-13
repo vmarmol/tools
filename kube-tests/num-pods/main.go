@@ -1,8 +1,10 @@
 package main
 
 import (
+	"encoding/csv"
 	"flag"
 	"fmt"
+	"os"
 	"os/exec"
 	"time"
 
@@ -25,8 +27,28 @@ func RunCommand(args ...string) {
 	}
 }
 
+func WriteRecord(w *csv.Writer, timestamp time.Time, event string) {
+	err := w.Write([]string{
+		fmt.Sprintf("%d", timestamp.Unix()),
+		event,
+	})
+	if err != nil {
+		glog.Warningf("Failed to write event %q at %v: %v", event, timestamp, err)
+	}
+	glog.Infof("Event %q at %v", event, timestamp)
+	w.Flush()
+}
+
 func main() {
 	flag.Parse()
+
+	filename := fmt.Sprintf("output_num-pods_%v.csv", time.Now())
+	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0644)
+	if err != nil {
+		glog.Fatalf("Failed to open %q: %v", filename, err)
+	}
+	w := csv.NewWriter(file)
+	w.Write([]string{"UNIX Timestamp", "Number of Running Pods"})
 
 	// Start the service.
 	RunCommand("create", "-f", replicationControllerFile)
@@ -40,14 +62,13 @@ func main() {
 	// Scale the replication controller.
 	for i := 0; i < (maxPods + numPodsIncrement); i += numPodsIncrement {
 		// Scale it.
-		glog.Infof("BEGIN --- Resize[%d]", i)
+		WriteRecord(w, time.Now(), fmt.Sprintf("%d", i))
 		RunCommand("resize", fmt.Sprintf("--replicas=%d", i), "replicationcontrollers", replicationController)
-		// TODO(vmarmol): Should probably wait for them to be running.
-		glog.Infof("END --- Resize[%d]", i)
+		// TODO(vmarmol): Record events for resizing.
 
 		// Wait.
 		time.Sleep(waitInState)
 	}
 
-	glog.Infof("RUN COMPLETED")
+	glog.Infof("Completed")
 }
