@@ -21,8 +21,19 @@
 	    "spec": {
 		"containers": [
 		    {
-			"name": "pause",
-			"image": "kubernetes/pause:latest"
+			"name": "ok-server",
+			"image": "vmarmol/ok-server:latest",
+			"healthProbe": {
+			    "exec": {
+			        "command": ["/bin/true"]
+			    }
+			},
+			"readinessProbe": {
+			    "httpGet": {
+			        "path": "/healthz",
+				"port": 8080
+			    }
+			}
 		    }
 		]
 	    }

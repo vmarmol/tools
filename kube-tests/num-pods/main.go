@@ -22,7 +22,6 @@ var waitInState = flag.Duration("wait_in_state", 10*time.Minute, "Amount of time
 
 // Run a kubectl command with the specified arguments.
 func RunCommand(args ...string) {
-	glog.Infof("Executing kubectl %v", args)
 	out, err := exec.Command("kubectl.sh", args...).CombinedOutput()
 	if err != nil {
 		glog.Warningf("Failed to run %v with error: %v and output %s", args, err, string(out))
