@@ -52,7 +52,7 @@ func getStats(containerName string, client *client.Client) (StatsData, error) {
 
 func outputFirstLine(w *csv.Writer) {
 	w.Write([]string{
-		"Timestamp",
+		"UNIX Timestamp",
 		"CPU Usage in Cores",
 		"Memory Usage in Bytes",
 		"Memory Working Set in Bytes",
@@ -61,7 +61,7 @@ func outputFirstLine(w *csv.Writer) {
 
 func outputLine(containerName string, stats StatsData, w *csv.Writer) {
 	strOutput := []string{
-		fmt.Sprintf("%v", stats.Timestamp),
+		fmt.Sprintf("%d", stats.Timestamp.Unix()),
 		fmt.Sprintf("%.3f", stats.CpuCores),
 		fmt.Sprintf("%d", stats.MemoryUsage),
 		fmt.Sprintf("%d", stats.MemoryWorkingSet),
