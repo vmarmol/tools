@@ -11,14 +11,12 @@ import (
 	"github.com/golang/glog"
 )
 
-const (
-	replicationController     = "pause-controller"
-	replicationControllerFile = "pause-controller.json"
-)
-
 var maxPods = flag.Int("max_pods", 50, "The max number of pods to scale to")
 var podsDelta = flag.Int("pods_delta", 5, "The number of pods to change at any given step")
 var waitInState = flag.Duration("wait_in_state", 10*time.Minute, "Amount of time to wait between steps")
+var replicationControllerFile = flag.String("spec_file", "stress.json", "File containing the replication controller spec used by the test")
+var replicationController = flag.String("replication_controller", "pause-controller", "Name of the replication controller used by the test")
+var scaleDown = flag.Bool("scale_down", false, "Whether to also scale the test down after reaching max pods")
 
 // Run a kubectl command with the specified arguments.
 func RunCommand(args ...string) {
@@ -52,19 +50,19 @@ func main() {
 	w.Write([]string{"UNIX Timestamp", "Number of Running Pods"})
 
 	// Start the service.
-	RunCommand("create", "-f", replicationControllerFile)
+	RunCommand("create", "-f", *replicationControllerFile)
 
 	// Cleanup.
 	defer func() {
-		RunCommand("resize", "--replicas=0", "replicationcontrollers", replicationController)
-		RunCommand("delete", "-f", replicationControllerFile)
+		RunCommand("resize", "--replicas=0", "replicationcontrollers", *replicationController)
+		RunCommand("delete", "-f", *replicationControllerFile)
 	}()
 
 	// Scale the replication controller up.
 	for i := 0; i < (*maxPods + *podsDelta); i += *podsDelta {
 		// Scale it.
 		WriteRecord(w, time.Now(), fmt.Sprintf("%d", i))
-		RunCommand("resize", fmt.Sprintf("--replicas=%d", i), "replicationcontrollers", replicationController)
+		RunCommand("resize", fmt.Sprintf("--replicas=%d", i), "replicationcontrollers", *replicationController)
 		// TODO(vmarmol): Record events for resizing.
 
 		// Wait.
@@ -72,14 +70,16 @@ func main() {
 	}
 
 	// Scale the replication controller down.
-	for i := (*maxPods - *podsDelta); i >= 0; i -= *podsDelta {
-		// Scale it.
-		WriteRecord(w, time.Now(), fmt.Sprintf("%d", i))
-		RunCommand("resize", fmt.Sprintf("--replicas=%d", i), "replicationcontrollers", replicationController)
-		// TODO(vmarmol): Record events for resizing.
+	if *scaleDown {
+		for i := (*maxPods - *podsDelta); i >= 0; i -= *podsDelta {
+			// Scale it.
+			WriteRecord(w, time.Now(), fmt.Sprintf("%d", i))
+			RunCommand("resize", fmt.Sprintf("--replicas=%d", i), "replicationcontrollers", *replicationController)
+			// TODO(vmarmol): Record events for resizing.
 
-		// Wait.
-		time.Sleep(*waitInState)
+			// Wait.
+			time.Sleep(*waitInState)
+		}
 	}
 
 	glog.Infof("Completed")

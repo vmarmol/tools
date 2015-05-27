@@ -1,0 +1,65 @@
+{
+    "kind": "ReplicationController",
+    "apiVersion": "v1beta3",
+    "metadata": {
+	"name": "pause-controller",
+	"labels": {
+	  "name": "pause"
+	}
+    },
+    "spec": {
+	"replicas": 1,
+	"selector": {
+            "name": "pause"
+	},
+	"template": {
+	    "metadata": {
+		"labels": {
+		    "name": "pause"
+		}
+	    },
+	    "spec": {
+		"containers": [
+		    {
+			"name": "with-volumes",
+			"image": "kubernetes/pause:go",
+			"volumeMounts": [
+			    {
+			        "name": "vol1",
+    			        "mountPath": "/vol1"
+			    },
+			    {
+			        "name": "vol2",
+    			        "mountPath": "/vol2"
+			    },
+			    {
+			        "name": "vol3",
+    			        "mountPath": "/vol3"
+			    }
+			]
+		    }
+		],
+		"volumes": [
+		    {
+		        "name": "vol1",
+			"emptyDir": {
+			    "medium": "Memory"
+			}
+		    },
+		    {
+		        "name": "vol2",
+			"emptyDir": {
+			    "medium": "Memory"
+			}
+		    },
+		    {
+		        "name": "vol3",
+			"emptyDir": {
+			    "medium": "Memory"
+			}
+		    }
+		]
+	    }
+	}
+    }
+}

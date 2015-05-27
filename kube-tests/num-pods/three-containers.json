@@ -1,0 +1,39 @@
+{
+    "kind": "ReplicationController",
+    "apiVersion": "v1beta3",
+    "metadata": {
+	"name": "pause-controller",
+	"labels": {
+	  "name": "pause"
+	}
+    },
+    "spec": {
+	"replicas": 0,
+	"selector": {
+            "name": "pause"
+	},
+	"template": {
+	    "metadata": {
+		"labels": {
+		    "name": "pause"
+		}
+	    },
+	    "spec": {
+		"containers": [
+		    {
+			"name": "pause0",
+			"image": "kubernetes/pause:go"
+		    },
+		    {
+			"name": "pause1",
+			"image": "kubernetes/pause:go"
+		    },
+		    {
+			"name": "pause2",
+			"image": "kubernetes/pause:go"
+		    }
+		]
+	    }
+	}
+    }
+}

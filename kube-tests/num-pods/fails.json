@@ -1,0 +1,31 @@
+{
+    "kind": "ReplicationController",
+    "apiVersion": "v1beta3",
+    "metadata": {
+	"name": "pause-controller",
+	"labels": {
+	  "name": "pause"
+	}
+    },
+    "spec": {
+	"replicas": 0,
+	"selector": {
+            "name": "pause"
+	},
+	"template": {
+	    "metadata": {
+		"labels": {
+		    "name": "pause"
+		}
+	    },
+	    "spec": {
+		"containers": [
+		    {
+			"name": "fails",
+			"image": "vmarmol/false:latest"
+		    }
+		]
+	    }
+	}
+    }
+}

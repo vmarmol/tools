@@ -1,0 +1,86 @@
+{
+    "kind": "ReplicationController",
+    "apiVersion": "v1beta3",
+    "metadata": {
+	"name": "pause-controller",
+	"labels": {
+	  "name": "pause"
+	}
+    },
+    "spec": {
+	"replicas": 0,
+	"selector": {
+            "name": "pause"
+	},
+	"template": {
+	    "metadata": {
+		"labels": {
+		    "name": "pause"
+		}
+	    },
+	    "spec": {
+		"containers": [
+		    {
+			"name": "pause",
+			"image": "vmarmol/pause:latest",
+			"healthProbe": {
+			    "exec": {
+			        "command": ["/bin/true"]
+			    }
+			},
+			"volumeMounts": [
+			    {
+			        "name": "vol1",
+    			        "mountPath": "/vol1"
+			    },
+			    {
+			        "name": "vol2",
+    			        "mountPath": "/vol2"
+			    }
+			]
+		    },
+		    {
+			"name": "ok-server",
+			"image": "vmarmol/ok-server:latest",
+			"healthProbe": {
+			    "httpGet": {
+			        "path": "/healthz",
+				"port": 8080
+			    }
+			},
+			"volumeMounts": [
+			    {
+			        "name": "vol1",
+    			        "mountPath": "/vol1"
+			    },
+			    {
+			        "name": "vol3",
+    			        "mountPath": "/vol3"
+			    }
+			]
+		    }
+		],
+		"volumes": [
+		    {
+		        "name": "vol1",
+			"emptyDir": {
+			    "medium": ""
+			}
+		    },
+		    {
+		        "name": "vol2",
+			"emptyDir": {
+			    "medium": "Memory"
+			}
+		    },
+		    {
+		        "name": "vol3",
+			"emptyDir": {
+			    "medium": "Memory"
+			}
+		    }
+		]
+	    }
+	}
+    }
+}
